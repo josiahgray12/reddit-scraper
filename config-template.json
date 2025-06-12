@@ -1,0 +1,36 @@
+{
+    "email": {
+        // Gmail SMTP server settings
+        "smtp_server": "smtp.gmail.com",
+        "smtp_port": 587,
+        
+        // Your Gmail address that will send the emails
+        "sender_email": "your-email@gmail.com",
+        
+        // Your Gmail App Password (not your regular Gmail password)
+        // To get an App Password:
+        // 1. Go to your Google Account settings
+        // 2. Enable 2-Step Verification if not already enabled
+        // 3. Go to Security > App passwords
+        // 4. Select "Mail" and "Other (Custom name)"
+        // 5. Name it "Nookly Bot"
+        // 6. Copy the 16-character password Google generates
+        "sender_password": "your-16-character-app-password",
+        
+        // The email address where you want to receive daily digests
+        "recipient_email": "your-email@gmail.com"
+    },
+    "claude": {
+        "api_key": "your-anthropic-api-key",
+        "model": "claude-3-sonnet-20240229",
+        "max_tokens": 1000,
+        "temperature": 0.7,
+        "response_preferences": {
+            "tone": "warm and supportive",
+            "style": "conversational",
+            "promotion_level": "subtle",
+            "include_resources": true,
+            "max_responses": 3
+        }
+    }
+} 

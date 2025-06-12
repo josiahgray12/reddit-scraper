@@ -1,0 +1,37 @@
+{
+    "reddit": {
+        "client_id": "LwTkJeDSims5CCWf940_cg",
+        "client_secret": "oK4cceA5phI-IoILwaOr3boHkyNupQ",
+        "user_agent": "nookly-engagement"
+    },
+    "server": {
+        "host": "0.0.0.0",
+        "port": 8000,
+        "debug": false
+    },
+    "rate_limiting": {
+        "requests_per_minute": 60,
+        "burst_limit": 5
+    },
+    "monitoring": {
+        "update_interval": 300,
+        "max_posts_per_subreddit": 100,
+        "max_comments_per_post": 1000
+    },
+    "logging": {
+        "level": "INFO",
+        "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        "file": "logs/reddit_scraper.log"
+    },
+    "subreddits": {
+        "monitored": [
+            {
+                "name": "python",
+                "description": "Python programming subreddit",
+                "monitor_comments": true,
+                "monitor_posts": true,
+                "keywords": ["tutorial", "help", "question"]
+            }
+        ]
+    }
+} 

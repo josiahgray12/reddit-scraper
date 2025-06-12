@@ -1,0 +1,86 @@
+import logging
+import json
+import os
+from pathlib import Path
+from typing import Dict, Any
+
+class Logger:
+    def __init__(self, config_path: str = "config/config.json"):
+        self.config = self._load_config(config_path)
+        self._setup_logger()
+        
+    def _load_config(self, config_path: str) -> Dict[str, Any]:
+        """Load logging configuration from JSON file."""
+        try:
+            with open(config_path) as f:
+                return json.load(f)
+        except FileNotFoundError:
+            print("Configuration file not found. Using default settings.")
+            return {
+                "logging": {
+                    "level": "INFO",
+                    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+                    "file": "logs/reddit_scraper.log"
+                }
+            }
+    
+    def _setup_logger(self):
+        """Set up the logger with configuration."""
+        log_config = self.config.get("logging", {})
+        log_level = getattr(logging, log_config.get("level", "INFO"))
+        log_format = log_config.get("format", "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        log_file = log_config.get("file", "logs/reddit_scraper.log")
+        
+        # Create logs directory if it doesn't exist
+        log_dir = Path(log_file).parent
+        log_dir.mkdir(exist_ok=True)
+        
+        # Configure logging
+        logging.basicConfig(
+            level=log_level,
+            format=log_format,
+            handlers=[
+                logging.FileHandler(log_file),
+                logging.StreamHandler()
+            ]
+        )
+        
+        self.logger = logging.getLogger("reddit_scraper")
+    
+    def info(self, message: str):
+        """Log an info message."""
+        self.logger.info(message)
+    
+    def error(self, message: str, error: Exception = None):
+        """Log an error message with plain English explanation."""
+        if error:
+            error_message = self._get_plain_english_error(error)
+            self.logger.error(f"{message}: {error_message}")
+        else:
+            self.logger.error(message)
+    
+    def warning(self, message: str):
+        """Log a warning message."""
+        self.logger.warning(message)
+    
+    def debug(self, message: str):
+        """Log a debug message."""
+        self.logger.debug(message)
+    
+    def _get_plain_english_error(self, error: Exception) -> str:
+        """Convert technical error messages to plain English."""
+        error_messages = {
+            "prawcore.exceptions.NotFound": "The requested Reddit content was not found. It may have been deleted or is private.",
+            "prawcore.exceptions.Forbidden": "Access to this Reddit content is forbidden. You may not have permission to view it.",
+            "prawcore.exceptions.TooManyRequests": "Too many requests to Reddit. Please wait a moment before trying again.",
+            "prawcore.exceptions.ServerError": "Reddit's servers are having issues. Please try again later.",
+            "prawcore.exceptions.RequestException": "There was a problem connecting to Reddit. Please check your internet connection.",
+            "json.JSONDecodeError": "There was a problem reading the configuration file. Please check its format.",
+            "FileNotFoundError": "A required file is missing. Please check your installation.",
+            "PermissionError": "Permission denied. Please check file permissions.",
+            "ValueError": "Invalid value provided. Please check your configuration.",
+            "KeyError": "Missing required configuration. Please check your settings."
+        }
+        
+        error_type = type(error).__name__
+        return error_messages.get(error_type, f"An unexpected error occurred: {str(error)}") 
