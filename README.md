@@ -47,6 +47,17 @@ cp .env.example .env
 REDDIT_CLIENT_ID=your_client_id
 REDDIT_CLIENT_SECRET=your_client_secret
 REDDIT_USER_AGENT=your_user_agent
+
+# Server Configuration
+SERVER_HOST=0.0.0.0
+SERVER_PORT=8000
+
+# Logging Configuration
+LOG_LEVEL=DEBUG
+LOG_FILE=logs/app.log
+
+# Storage Configuration
+DATA_DIR=data
 ```
 
 ### Running the Application
