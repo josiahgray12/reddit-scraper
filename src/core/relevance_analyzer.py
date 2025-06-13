@@ -21,6 +21,31 @@ class UserType(Enum):
     ADMINISTRATOR = "administrator"
     OTHER = "other"
 
+    @classmethod
+    def normalize(cls, value: str) -> 'UserType':
+        """Normalize user type string to enum value."""
+        value = value.lower().strip()
+        # Handle plural forms
+        if value.endswith('s'):
+            value = value[:-1]
+        # Map common variations
+        mapping = {
+            'educator': 'teacher',
+            'parent': 'parent',
+            'therapist': 'therapist',
+            'admin': 'administrator',
+            'principal': 'administrator',
+            'slp': 'therapist',
+            'ot': 'therapist',
+            'speech': 'therapist',
+            'occupational': 'therapist'
+        }
+        normalized = mapping.get(value, value)
+        try:
+            return cls(normalized)
+        except ValueError:
+            return cls.OTHER
+
 @dataclass
 class RelevanceScore:
     total_score: float
@@ -203,7 +228,7 @@ COMPETITORS: [mention1, mention2, ...]"""
             # Extract values with more flexible patterns
             score = float(safe_extract(r"SCORE:?\s*(\d+(?:\.\d+)?)", "0"))
             user_type_str = safe_extract(r"TYPE:?\s*(\w+)", "other").lower()
-            user_type = UserType(user_type_str)
+            user_type = UserType.normalize(user_type_str)  # Use the new normalize method
             
             # Handle pain points with more flexible format
             pain_match = safe_extract(r"PAIN:?\s*\[?(.*?)\]?", "")
