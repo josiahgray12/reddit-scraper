@@ -17,6 +17,92 @@ A Python-based tool for monitoring and analyzing Reddit threads related to educa
 - Claude API key
 - SMTP server credentials for email notifications
 
+## Configuration
+
+### Environment Variables (.env)
+
+Create a `.env` file in the project root with your credentials:
+```env
+REDDIT_CLIENT_ID=your_client_id
+REDDIT_CLIENT_SECRET=your_client_secret
+REDDIT_USER_AGENT=your_user_agent
+CLAUDE_API_KEY=your_claude_api_key
+SMTP_SERVER=your_smtp_server
+SMTP_PORT=your_smtp_port
+SMTP_USERNAME=your_smtp_username
+SMTP_PASSWORD=your_smtp_password
+```
+
+### Application Configuration (config.json)
+
+Create a `config.json` file in the project root with the following structure:
+```json
+{
+   "email": {
+      // Gmail SMTP server settings
+      "smtp_server": "smtp.gmail.com",
+      "smtp_port": 587,
+      
+      // Your Gmail address that will send the emails
+      "sender_email": "your-email@gmail.com",
+      
+      // Your Gmail App Password (not your regular Gmail password)
+      // To get an App Password:
+      // 1. Go to your Google Account settings
+      // 2. Enable 2-Step Verification if not already enabled
+      // 3. Go to Security > App passwords
+      // 4. Select "Mail" and "Other (Custom name)"
+      // 5. Name it "Nookly Bot"
+      // 6. Copy the 16-character password Google generates
+      "sender_password": "wxzy wxyz wxyz wxyz",
+      
+      // The email address where you want to receive daily digests
+      "recipient_email": "your-email@gmail.com"
+   },
+   "claude": {
+      "api_key": "your-anthropic-api-key",
+      "model": "claude-3-5-sonnet-20241022",
+      "max_tokens": 1000,
+      "temperature": 0.7,
+      "response_preferences": {
+         "tone": "warm and supportive",
+         "style": "conversational",
+         "promotion_level": "subtle",
+         "include_resources": true,
+         "max_responses": 3
+      }
+   }
+}
+```
+
+#### Configuration Options
+
+- **reddit**
+  - `subreddits`: List of subreddits to monitor
+  - `search_terms`: Keywords to look for in threads
+  - `min_score`: Minimum score for a thread to be considered relevant
+  - `min_comments`: Minimum number of comments for a thread to be considered
+  - `check_interval`: Time between checks in seconds (300 = 5 minutes)
+
+- **claude**
+  - `model`: Claude model to use for analysis
+  - `api_key`: Your Claude API key (can also be set in .env)
+
+- **email**
+  - `from_email`: Sender email address
+  - `to_email`: Recipient email address
+  - `subject`: Subject line for daily digest
+  - `send_time`: Time to send daily digest (24-hour format)
+
+- **logging**
+  - `level`: Logging level (DEBUG, INFO, WARNING, ERROR)
+  - `daily_log`: Path to daily log file
+  - `error_log`: Path to error log file
+
+- **storage**
+  - `data_dir`: Directory to store thread data
+  - `max_threads`: Maximum number of threads to store
+
 ## Local Development Setup
 
 1. Clone the repository:
@@ -36,17 +122,7 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-4. Create a `.env` file in the project root with your credentials:
-```env
-REDDIT_CLIENT_ID=your_client_id
-REDDIT_CLIENT_SECRET=your_client_secret
-REDDIT_USER_AGENT=your_user_agent
-CLAUDE_API_KEY=your_claude_api_key
-SMTP_SERVER=your_smtp_server
-SMTP_PORT=your_smtp_port
-SMTP_USERNAME=your_smtp_username
-SMTP_PASSWORD=your_smtp_password
-```
+4. Create both `.env` and `config.json` files as described above.
 
 5. Run the application:
 ```bash
@@ -79,10 +155,11 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-5. Create and configure the `.env` file:
+5. Create and configure both `.env` and `config.json` files:
 ```bash
 nano .env
-# Add your credentials as shown in the Local Development Setup section
+nano config.json
+# Add your credentials and configuration as shown above
 ```
 
 ### Running the Application
@@ -176,6 +253,7 @@ reddit-scraper/
 ├── logs/
 ├── tests/
 ├── .env
+├── config.json
 ├── requirements.txt
 └── README.md
 ```

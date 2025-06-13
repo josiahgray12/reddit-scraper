@@ -15,14 +15,14 @@
         // 4. Select "Mail" and "Other (Custom name)"
         // 5. Name it "Nookly Bot"
         // 6. Copy the 16-character password Google generates
-        "sender_password": "your-16-character-app-password",
+        "sender_password": "wxzy wxyz wxyz wxyz",
         
         // The email address where you want to receive daily digests
         "recipient_email": "your-email@gmail.com"
     },
     "claude": {
         "api_key": "your-anthropic-api-key",
-        "model": "claude-3-sonnet-20240229",
+        "model": "claude-3-5-sonnet-20241022",
         "max_tokens": 1000,
         "temperature": 0.7,
         "response_preferences": {
