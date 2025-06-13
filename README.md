@@ -77,13 +77,6 @@ Create a `config.json` file in the project root with the following structure:
 
 #### Configuration Options
 
-- **reddit**
-  - `subreddits`: List of subreddits to monitor
-  - `search_terms`: Keywords to look for in threads
-  - `min_score`: Minimum score for a thread to be considered relevant
-  - `min_comments`: Minimum number of comments for a thread to be considered
-  - `check_interval`: Time between checks in seconds (300 = 5 minutes)
-
 - **claude**
   - `model`: Claude model to use for analysis
   - `api_key`: Your Claude API key (can also be set in .env)
@@ -93,15 +86,6 @@ Create a `config.json` file in the project root with the following structure:
   - `to_email`: Recipient email address
   - `subject`: Subject line for daily digest
   - `send_time`: Time to send daily digest (24-hour format)
-
-- **logging**
-  - `level`: Logging level (DEBUG, INFO, WARNING, ERROR)
-  - `daily_log`: Path to daily log file
-  - `error_log`: Path to error log file
-
-- **storage**
-  - `data_dir`: Directory to store thread data
-  - `max_threads`: Maximum number of threads to store
 
 ## Local Development Setup
 
