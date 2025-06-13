@@ -91,9 +91,11 @@ python check-status.py
 ```
 
 You should see:
+- ✅ System Status: Running (with process ID and start time)
 - ✅ All configuration files present
-- ✅ System running
-- ✅ Log files created
+- ✅ Log files created:
+  - `logs/daily.log`: General operation logs
+  - `logs/error.log`: Error-specific logs
 
 ## 7. Testing Email
 
@@ -102,6 +104,27 @@ You should see:
    ```bash
    python test-email.py
    ```
+
+## 8. Monitoring Logs
+
+The system creates two types of logs:
+1. `logs/daily.log`: Contains all operational logs (INFO level and above)
+   - Thread monitoring
+   - Email sending
+   - General system status
+2. `logs/error.log`: Contains only error messages
+   - API errors
+   - Connection issues
+   - Configuration problems
+
+To view logs:
+```bash
+# View daily logs
+cat logs/daily.log
+
+# View error logs
+cat logs/error.log
+```
 
 ## Common Issues
 
@@ -122,14 +145,28 @@ You should see:
 - Verify Gmail App Password
 - Check if 2-Step Verification is enabled
 - Ensure correct SMTP settings
+- Check `logs/error.log` for specific error messages
 
 ### Reddit API Errors
 - Verify Client ID and Secret
 - Check if the app is properly created
 - Ensure correct User Agent string
+- Check `logs/error.log` for API-related errors
+
+### System Not Running
+- Check if the process is running:
+  ```bash
+  python check-status.py
+  ```
+- If not running, check `logs/error.log` for errors
+- Restart the system:
+  ```bash
+  python start.py
+  ```
 
 ## Need Help?
 
 Contact support:
 - Email: support@nookly.com
-- Hours: Monday-Friday, 9 AM - 5 PM EST 
+- Hours: Monday-Friday, 9 AM - 5 PM EST
+- Include any error messages from `logs/error.log` when contacting support 

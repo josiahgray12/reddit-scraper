@@ -9,6 +9,7 @@ from typing import Dict, List, Optional
 from .core.reddit_client import RedditClient
 from .core.response_generator import ResponseGenerator
 from .core.email_sender import EmailSender
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,7 @@ class ThreadMonitor:
 
     async def cleanup(self):
         """Clean up resources."""
+        delete_status_file()  # Delete status file
         await self.reddit_client.cleanup()
         self._stop_event.set()
 
@@ -38,7 +40,7 @@ class ThreadMonitor:
                 logger.warning(f"Thread {thread_id} missing relevance data, skipping")
                 return
 
-            # Generate response if thread is relevant
+            # Ensure relevance is present before accessing it
             relevance_score = thread['post']['relevance'].get('score', 0)
             if relevance_score >= 6:
                 response = self.response_generator.generate_response(thread)

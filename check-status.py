@@ -7,16 +7,27 @@ A user-friendly script to check the system status.
 import os
 import json
 import time
+import psutil
 from datetime import datetime
 from pathlib import Path
 
-def read_status_file():
-    """Read the status file."""
-    try:
-        with open('status.txt', 'r') as f:
-            return f.read()
-    except FileNotFoundError:
-        return "Status file not found. System may not be running."
+def check_running_processes():
+    """Check if the Reddit monitor processes are running."""
+    running_processes = []
+    for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+        try:
+            # Check for Python processes running our scripts
+            if proc.info['name'] == 'python' and proc.info['cmdline']:
+                cmdline = ' '.join(proc.info['cmdline'])
+                if 'start.py' in cmdline or 'monitor.py' in cmdline:
+                    running_processes.append({
+                        'pid': proc.info['pid'],
+                        'cmdline': cmdline,
+                        'start_time': datetime.fromtimestamp(proc.create_time()).strftime('%Y-%m-%d %H:%M:%S')
+                    })
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass
+    return running_processes
 
 def get_last_email_time():
     """Get the time of the last email sent."""
@@ -54,10 +65,17 @@ def main():
     print("\n📊 Nookly Reddit Monitor Status\n")
     print("=" * 50)
 
-    # Check if system is running
-    status = read_status_file()
+    # Check running processes
     print("\n🔄 System Status:")
-    print(status)
+    running_processes = check_running_processes()
+    if running_processes:
+        print("✅ System is running")
+        for proc in running_processes:
+            print(f"  • Process ID: {proc['pid']}")
+            print(f"  • Started: {proc['start_time']}")
+            print(f"  • Command: {proc['cmdline']}")
+    else:
+        print("❌ System is not running")
 
     # Check configuration
     print("\n⚙️ Configuration:")

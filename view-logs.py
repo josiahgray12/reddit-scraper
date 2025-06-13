@@ -18,7 +18,7 @@ def get_log_files():
     
     return [f for f in log_dir.glob('*.log')]
 
-def read_log_file(file_path, lines=50, level=None, search=None):
+def read_log_file(file_path, num_lines=50, level=None, search=None):
     """Read and filter log file."""
     try:
         with open(file_path, 'r') as f:
@@ -33,7 +33,7 @@ def read_log_file(file_path, lines=50, level=None, search=None):
             lines = [l for l in lines if search.lower() in l.lower()]
             
         # Get last N lines
-        return lines[-lines:]
+        return lines[-num_lines:]
     except FileNotFoundError:
         return []
 

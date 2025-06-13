@@ -20,7 +20,7 @@ class Logger:
                 "logging": {
                     "level": "INFO",
                     "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-                    "file": "logs/reddit_scraper.log"
+                    "file": "logs/daily.log"
                 }
             }
     
@@ -29,22 +29,37 @@ class Logger:
         log_config = self.config.get("logging", {})
         log_level = getattr(logging, log_config.get("level", "INFO"))
         log_format = log_config.get("format", "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-        log_file = log_config.get("file", "logs/reddit_scraper.log")
         
         # Create logs directory if it doesn't exist
-        log_dir = Path(log_file).parent
+        log_dir = Path("logs")
         log_dir.mkdir(exist_ok=True)
         
-        # Configure logging
-        logging.basicConfig(
-            level=log_level,
-            format=log_format,
-            handlers=[
-                logging.FileHandler(log_file),
-                logging.StreamHandler()
-            ]
-        )
+        # Create handlers for different log files
+        daily_handler = logging.FileHandler("logs/daily.log")
+        error_handler = logging.FileHandler("logs/error.log")
+        console_handler = logging.StreamHandler()
         
+        # Set formatters
+        formatter = logging.Formatter(log_format)
+        daily_handler.setFormatter(formatter)
+        error_handler.setFormatter(formatter)
+        console_handler.setFormatter(formatter)
+        
+        # Set levels
+        daily_handler.setLevel(logging.INFO)
+        error_handler.setLevel(logging.ERROR)
+        console_handler.setLevel(log_level)
+        
+        # Configure root logger
+        root_logger = logging.getLogger()
+        root_logger.setLevel(logging.INFO)
+        
+        # Add handlers
+        root_logger.addHandler(daily_handler)
+        root_logger.addHandler(error_handler)
+        root_logger.addHandler(console_handler)
+        
+        # Create application logger
         self.logger = logging.getLogger("reddit_scraper")
     
     def info(self, message: str):

@@ -6,6 +6,7 @@ import nltk
 from nltk.sentiment import SentimentIntensityAnalyzer
 from collections import Counter
 from src.utils.logger import Logger
+from src.core.claude_client import ClaudeClient
 
 # Download required NLTK data
 try:
@@ -34,6 +35,8 @@ class RelevanceScore:
 class RelevanceAnalyzer:
     def __init__(self):
         self.sia = SentimentIntensityAnalyzer()
+        self.claude_client = ClaudeClient()
+        self.logger = Logger()
         
         # High-value keywords (2 points each)
         self.high_value_terms = {
@@ -127,32 +130,107 @@ class RelevanceAnalyzer:
         ]
 
     def analyze_thread(self, post_content: str, comments_content: List[str]) -> RelevanceScore:
-        """Analyze a thread's relevance to Nookly's business model."""
-        # Combine post and comments for analysis
-        full_content = post_content + " " + " ".join(comments_content)
+        """Analyze a thread's relevance using Claude with NLTK fallback."""
+        try:
+            # Combine post and comments for analysis
+            full_content = post_content + " " + " ".join(comments_content)
+            
+            # Try Claude analysis first
+            claude_analysis = self._analyze_with_claude(full_content)
+            if claude_analysis:
+                return claude_analysis
+            
+            # Fallback to NLTK analysis if Claude fails
+            self.logger.warning("Falling back to NLTK analysis")
+            return self._analyze_with_nltk(full_content)
+            
+        except Exception as e:
+            self.logger.error("Error in thread analysis", e)
+            return self._analyze_with_nltk(full_content)
+
+    def _analyze_with_claude(self, content: str) -> RelevanceScore:
+        """Analyze content using Claude."""
+        try:
+            # Create a prompt for Claude
+            prompt = f"""Analyze this Reddit thread content for relevance to an educational platform for children ages 2-8:
+
+{content}
+
+Please provide analysis in the following format:
+1. Total relevance score (0-10)
+2. User type (parent/teacher/therapist/administrator/other)
+3. Pain points (list)
+4. Keywords found (list)
+5. Sentiment score (-1 to 1)
+6. Age relevance (true/false)
+7. Urgency level (low/medium/high)
+8. Competitive mentions (list)
+
+Format your response exactly like this:
+SCORE: [number]
+TYPE: [type]
+PAIN: [point1, point2, ...]
+KEYWORDS: [word1, word2, ...]
+SENTIMENT: [number]
+AGE: [true/false]
+URGENCY: [level]
+COMPETITORS: [mention1, mention2, ...]"""
+
+            # Get Claude's analysis
+            response = self.claude_client.client.messages.create(
+                model="claude-3-sonnet-20240229",
+                max_tokens=500,
+                temperature=0.3,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            
+            # Parse Claude's response
+            analysis_text = response.content[0].text
+            return self._parse_claude_response(analysis_text)
+            
+        except Exception as e:
+            self.logger.error("Claude analysis failed", e)
+            return None
+
+    def _parse_claude_response(self, response: str) -> RelevanceScore:
+        """Parse Claude's response into a RelevanceScore object."""
+        try:
+            # Extract values using regex
+            score = float(re.search(r"SCORE:\s*(\d+(?:\.\d+)?)", response).group(1))
+            user_type = UserType(re.search(r"TYPE:\s*(\w+)", response).group(1).lower())
+            pain_points = [p.strip() for p in re.search(r"PAIN:\s*\[(.*?)\]", response).group(1).split(",")]
+            keywords = [k.strip() for k in re.search(r"KEYWORDS:\s*\[(.*?)\]", response).group(1).split(",")]
+            sentiment = float(re.search(r"SENTIMENT:\s*([-]?\d+(?:\.\d+)?)", response).group(1))
+            age_relevance = re.search(r"AGE:\s*(true|false)", response).group(1).lower() == "true"
+            urgency = re.search(r"URGENCY:\s*(\w+)", response).group(1).lower()
+            competitors = [c.strip() for c in re.search(r"COMPETITORS:\s*\[(.*?)\]", response).group(1).split(",")]
+            
+            return RelevanceScore(
+                total_score=score,
+                user_type=user_type,
+                pain_points=pain_points,
+                keywords_found=keywords,
+                sentiment_score=sentiment,
+                age_relevance=age_relevance,
+                urgency_level=urgency,
+                competitive_mentions=competitors
+            )
+            
+        except Exception as e:
+            self.logger.error("Error parsing Claude response", e)
+            return None
+
+    def _analyze_with_nltk(self, content: str) -> RelevanceScore:
+        """Fallback analysis using NLTK."""
+        # Move existing analysis logic here
+        keyword_score = self._calculate_keyword_score(content)
+        user_type = self._detect_user_type(content)
+        pain_points = self._identify_pain_points(content)
+        sentiment_score = self._analyze_sentiment(content)
+        age_relevance = self._check_age_relevance(content)
+        urgency_level = self._detect_urgency(content)
+        competitive_mentions = self._find_competitive_mentions(content)
         
-        # Calculate base score from keywords
-        keyword_score = self._calculate_keyword_score(full_content)
-        
-        # Detect user type
-        user_type = self._detect_user_type(full_content)
-        
-        # Find pain points
-        pain_points = self._identify_pain_points(full_content)
-        
-        # Get sentiment score
-        sentiment_score = self._analyze_sentiment(full_content)
-        
-        # Check age relevance
-        age_relevance = self._check_age_relevance(full_content)
-        
-        # Detect urgency
-        urgency_level = self._detect_urgency(full_content)
-        
-        # Find competitive mentions
-        competitive_mentions = self._find_competitive_mentions(full_content)
-        
-        # Calculate final score with adjustments
         final_score = self._calculate_final_score(
             keyword_score,
             sentiment_score,
@@ -164,7 +242,7 @@ class RelevanceAnalyzer:
             total_score=final_score,
             user_type=user_type,
             pain_points=pain_points,
-            keywords_found=self._get_found_keywords(full_content),
+            keywords_found=self._get_found_keywords(content),
             sentiment_score=sentiment_score,
             age_relevance=age_relevance,
             urgency_level=urgency_level,
