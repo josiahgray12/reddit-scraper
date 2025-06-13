@@ -1,6 +1,6 @@
 # Reddit Scraper
 
-A Python application that monitors Reddit threads for relevant content in education and special needs communities.
+A Python application that monitors Reddit threads for relevant content to Nookly, an AI tool for educators and parents, and send daily email summaries with suggested follow up posts.
 
 ## Quick Start
 
