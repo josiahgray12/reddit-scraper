@@ -2,6 +2,8 @@
 
 A Python application that monitors Reddit threads for relevant content to Nookly, an AI tool for educators and parents, and send daily email summaries with suggested follow up posts.
 
+This application uses Claude to analyze threads for relevance and to draft proposed threads.
+
 ## Quick Start
 
 ### Prerequisites
