@@ -1,16 +1,23 @@
 # Reddit Scraper
 
-A Python application that monitors Reddit threads for relevant content to Nookly, an AI tool for educators and parents, and send daily email summaries with suggested follow up posts.
+A Python-based tool for monitoring and analyzing Reddit threads related to educational content for children ages 2-8.
 
-This application uses Claude to analyze threads for relevance and to draft proposed threads.
+## Features
 
-## Quick Start
+- Monitors multiple subreddits for relevant content
+- Analyzes thread relevance using Claude AI and NLTK
+- Generates personalized responses using Claude AI
+- Sends daily email digests of relevant threads
+- Stores data in JSON format
 
-### Prerequisites
-- Python 3.8 or newer
-- Git (for cloning the repository)
+## Prerequisites
 
-### Installation
+- Python 3.10 or higher
+- Reddit API credentials
+- Claude API key
+- SMTP server credentials for email notifications
+
+## Local Development Setup
 
 1. Clone the repository:
 ```bash
@@ -18,18 +25,10 @@ git clone https://github.com/yourusername/reddit-scraper.git
 cd reddit-scraper
 ```
 
-2. Create and activate the virtual environment:
-
-**On macOS/Linux:**
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
-**On Windows:**
+2. Create and activate a virtual environment:
 ```bash
 python -m venv venv
-.\venv\Scripts\activate
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
 3. Install dependencies:
@@ -37,129 +36,164 @@ python -m venv venv
 pip install -r requirements.txt
 ```
 
-### Configuration
-
-1. Create a `.env` file in the project root:
-```bash
-cp .env.example .env
-```
-
-2. Edit `.env` and add your Reddit API credentials:
-```
+4. Create a `.env` file in the project root with your credentials:
+```env
 REDDIT_CLIENT_ID=your_client_id
 REDDIT_CLIENT_SECRET=your_client_secret
 REDDIT_USER_AGENT=your_user_agent
-
-# Server Configuration
-SERVER_HOST=0.0.0.0
-SERVER_PORT=8000
-
-# Logging Configuration
-LOG_LEVEL=DEBUG
-LOG_FILE=logs/app.log
-
-# Storage Configuration
-DATA_DIR=data
+CLAUDE_API_KEY=your_claude_api_key
+SMTP_SERVER=your_smtp_server
+SMTP_PORT=your_smtp_port
+SMTP_USERNAME=your_smtp_username
+SMTP_PASSWORD=your_smtp_password
 ```
 
-### Running the Application
-
-#### Method 1: Using the Start Script (Recommended)
-Simply run:
-```bash
-python start.py
-```
-
-This script will:
-- Check Python version
-- Create and activate the virtual environment if needed
-- Install dependencies
-- Start the application
-
-#### Method 2: Manual Start
-If you prefer to start manually:
-
-1. Ensure you're in the virtual environment:
-```bash
-# On macOS/Linux
-source venv/bin/activate
-
-# On Windows
-.\venv\Scripts\activate
-```
-
-2. Run the application:
+5. Run the application:
 ```bash
 python run.py
 ```
 
-### Monitoring
+## Droplet Deployment and Management
 
-The application will:
-- Monitor specified subreddits for new threads
-- Calculate relevance scores based on engagement
-- Log high-priority threads
-- Generate daily digests
+### Initial Setup
 
-### Logs
+1. SSH into your droplet:
+```bash
+ssh root@your_droplet_ip
+```
 
-Logs are stored in the `logs` directory:
-- `reddit_scraper.log`: Main application log
-- `thread_metrics.log`: Detailed thread metrics
+2. Clone the repository:
+```bash
+git clone https://github.com/yourusername/reddit-scraper.git
+cd reddit-scraper
+```
 
-## Development
+3. Create and activate a virtual environment:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
 
-### Project Structure
+4. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+5. Create and configure the `.env` file:
+```bash
+nano .env
+# Add your credentials as shown in the Local Development Setup section
+```
+
+### Running the Application
+
+1. Create a new screen session:
+```bash
+screen -S reddit-scraper
+```
+
+2. Activate the virtual environment:
+```bash
+source venv/bin/activate
+```
+
+3. Start the application:
+```bash
+python run.py
+```
+
+4. Detach from the screen session:
+- Press `Ctrl+A`, then `D`
+
+### Managing the Application
+
+1. List screen sessions:
+```bash
+screen -ls
+```
+
+2. Reattach to the screen session:
+```bash
+screen -r reddit-scraper
+```
+
+3. Stop the application:
+- Reattach to the screen session
+- Press `Ctrl+C` to stop the application
+- Type `exit` to close the screen session
+
+4. Restart the application:
+- Create a new screen session
+- Activate the virtual environment
+- Run `python run.py`
+
+### Updating the Application
+
+1. Pull the latest changes:
+```bash
+cd reddit-scraper
+git pull
+```
+
+2. Update dependencies if needed:
+```bash
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+3. Restart the application:
+- Stop the current instance (Ctrl+C in screen session)
+- Start a new instance (python run.py)
+
+### Monitoring Logs
+
+1. View the daily log:
+```bash
+tail -f logs/daily.log
+```
+
+2. View the error log:
+```bash
+tail -f logs/error.log
+```
+
+## Project Structure
+
 ```
 reddit-scraper/
 ├── src/
 │   ├── core/
 │   │   ├── reddit_client.py
-│   │   └── thread_analyzer.py
-│   ├── monitor.py
-│   └── utils/
-│       ├── logger.py
-│       └── storage.py
+│   │   ├── relevance_analyzer.py
+│   │   ├── response_generator.py
+│   │   └── claude_client.py
+│   ├── utils/
+│   │   ├── logger.py
+│   │   └── storage.py
+│   └── monitor.py
+├── data/
+│   └── threads/
 ├── logs/
+├── tests/
 ├── .env
 ├── requirements.txt
-├── run.py
-└── start.py
+└── README.md
 ```
 
-### Adding New Features
+## Testing
 
-1. Create a new branch:
+Run the test suite:
 ```bash
-git checkout -b feature/your-feature-name
+pytest
 ```
 
-2. Make your changes
-3. Run tests
-4. Submit a pull request
+## Contributing
 
-## Troubleshooting
-
-### Common Issues
-
-1. **Virtual Environment Not Active**
-   - Symptoms: Import errors, missing packages
-   - Solution: Activate the virtual environment using the commands above
-
-2. **Missing Dependencies**
-   - Symptoms: Import errors
-   - Solution: Run `pip install -r requirements.txt`
-
-3. **API Rate Limits**
-   - Symptoms: Connection errors, timeouts
-   - Solution: Check your Reddit API credentials and rate limits
-
-### Getting Help
-
-If you encounter issues:
-1. Check the logs in the `logs` directory
-2. Review the troubleshooting section
-3. Open an issue on GitHub
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
 ## License
 
