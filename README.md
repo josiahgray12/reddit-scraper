@@ -26,11 +26,17 @@ Create a `.env` file in the project root with your credentials:
 REDDIT_CLIENT_ID=your_client_id
 REDDIT_CLIENT_SECRET=your_client_secret
 REDDIT_USER_AGENT=your_user_agent
-CLAUDE_API_KEY=your_claude_api_key
-SMTP_SERVER=your_smtp_server
-SMTP_PORT=your_smtp_port
-SMTP_USERNAME=your_smtp_username
-SMTP_PASSWORD=your_smtp_password
+
+# Server Configuration
+SERVER_HOST=0.0.0.0
+SERVER_PORT=8000
+
+# Logging Configuration
+LOG_LEVEL=DEBUG
+LOG_FILE=logs/app.log
+
+# Storage Configuration
+DATA_DIR=data
 ```
 
 ### Application Configuration (config.json)
