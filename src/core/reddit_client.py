@@ -9,6 +9,7 @@ from datetime import datetime
 from ratelimit import limits, sleep_and_retry
 from typing import List, Dict, Any, Optional
 from pathlib import Path
+from src.core.relevance_analyzer import RelevanceAnalyzer
 
 # Load environment variables from .env file
 load_dotenv()
@@ -18,6 +19,7 @@ class RedditClient:
         self.client = None
         self.config = self._load_config()
         self.logger = Logger()
+        self.relevance_analyzer = RelevanceAnalyzer()
         
     async def initialize(self):
         """Initialize Reddit client with credentials from environment variables."""
@@ -228,50 +230,37 @@ class RedditClient:
 
                     # Get comments for the post
                     comments = await self.get_post_comments(post['id'], limit=100)
-                    
-                    # Calculate engagement metrics
-                    comment_count = len(comments)
-                    score = post.get('score', 0)
-                    
-                    # Add relevance score based on engagement
-                    relevance_metrics = {
-                        'score': min(10, (score + comment_count) / 100),
-                        'comment_count': comment_count,
-                        'engagement_rate': comment_count / max(1, score)
-                    }
-                    
-                    # Log the metrics
-                    self._log_thread_metrics(post['id'], relevance_metrics)
-                    
-                    # Add metrics to post
-                    post['relevance'] = relevance_metrics
-                    
+
+                    # Use Claude/NLTK for relevance analysis
+                    relevance = self.relevance_analyzer.analyze_thread(
+                        post_content=post.get('selftext', ''),
+                        comments_content=[c.get('body', '') for c in comments]
+                    )
+                    post['relevance'] = relevance.__dict__ if relevance else {}
+
                     relevant_threads.append({
                         'post': post,
                         'comments': comments
                     })
-                    
+
                     # Log if thread is considered relevant
-                    if relevance_metrics['score'] >= 6:
+                    if relevance and relevance.total_score >= 6:
                         self.logger.info(
                             f"High-priority thread found in r/{subreddit_name}: "
-                            f"Score: {relevance_metrics['score']:.2f}, "
-                            f"Comments: {comment_count}"
+                            f"Score: {relevance.total_score:.2f}, "
+                            f"Comments: {len(comments)}"
                         )
-                    
                 except Exception as post_error:
                     self.logger.error(
                         f"Error processing post {post.get('id', 'unknown')} in r/{subreddit_name}",
                         post_error
                     )
                     continue
-            
             self.logger.info(
                 f"Completed processing r/{subreddit_name}: "
                 f"Found {len(relevant_threads)} relevant threads"
             )
             return relevant_threads
-            
         except Exception as e:
             self.logger.error(f"Error getting relevant threads from r/{subreddit_name}", e)
             return []
@@ -285,22 +274,18 @@ class RedditClient:
             post = await self.get_post_details(thread_id)
             if not post:
                 return None
-            
             # Get comments
             comments = await self.get_post_comments(thread_id)
-            
-            # Calculate relevance score
-            post['relevance'] = {
-                'score': min(10, (post['score'] + len(comments)) / 100),
-                'comment_count': len(comments),
-                'engagement_rate': len(comments) / max(1, post['score'])
-            }
-            
+            # Use Claude/NLTK for relevance analysis
+            relevance = self.relevance_analyzer.analyze_thread(
+                post_content=post.get('selftext', ''),
+                comments_content=[c.get('body', '') for c in comments]
+            )
+            post['relevance'] = relevance.__dict__ if relevance else {}
             return {
                 'post': post,
                 'comments': comments
             }
-            
         except Exception as e:
             self.logger.error(f"Error getting thread {thread_id} from r/{subreddit_name}", e)
             return None

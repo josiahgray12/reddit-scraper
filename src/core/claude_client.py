@@ -96,9 +96,9 @@ For each response, include a relevance score (0-1) indicating how well it matche
             user_prompt = self._create_user_prompt(thread_content, user_type, pain_points)
             
             response = self.client.messages.create(
-                model="claude-3-sonnet-20240229",
-                max_tokens=1000,
-                temperature=0.7,
+                model=self.config["claude"]["model"],
+                max_tokens=self.config["claude"]["max_tokens"],
+                temperature=self.config["claude"]["temperature"],
                 system=system_prompt,
                 messages=[{"role": "user", "content": user_prompt}]
             )
@@ -147,7 +147,7 @@ For each response, include a relevance score (0-1) indicating how well it matche
         """Test Claude API connection."""
         try:
             self.client.messages.create(
-                model="claude-3-sonnet-20240229",
+                model=self.config["claude"]["model"],
                 max_tokens=10,
                 messages=[{"role": "user", "content": "Test connection"}]
             )

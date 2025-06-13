@@ -178,7 +178,7 @@ COMPETITORS: [mention1, mention2, ...]"""
 
             # Get Claude's analysis
             response = self.claude_client.client.messages.create(
-                model="claude-3-sonnet-20240229",
+                model=self.claude_client.config["claude"]["model"],
                 max_tokens=500,
                 temperature=0.3,
                 messages=[{"role": "user", "content": prompt}]
@@ -195,15 +195,38 @@ COMPETITORS: [mention1, mention2, ...]"""
     def _parse_claude_response(self, response: str) -> RelevanceScore:
         """Parse Claude's response into a RelevanceScore object."""
         try:
-            # Extract values using regex
-            score = float(re.search(r"SCORE:\s*(\d+(?:\.\d+)?)", response).group(1))
-            user_type = UserType(re.search(r"TYPE:\s*(\w+)", response).group(1).lower())
-            pain_points = [p.strip() for p in re.search(r"PAIN:\s*\[(.*?)\]", response).group(1).split(",")]
-            keywords = [k.strip() for k in re.search(r"KEYWORDS:\s*\[(.*?)\]", response).group(1).split(",")]
-            sentiment = float(re.search(r"SENTIMENT:\s*([-]?\d+(?:\.\d+)?)", response).group(1))
-            age_relevance = re.search(r"AGE:\s*(true|false)", response).group(1).lower() == "true"
-            urgency = re.search(r"URGENCY:\s*(\w+)", response).group(1).lower()
-            competitors = [c.strip() for c in re.search(r"COMPETITORS:\s*\[(.*?)\]", response).group(1).split(",")]
+            # Helper function to safely extract values
+            def safe_extract(pattern: str, default=None):
+                match = re.search(pattern, response, re.IGNORECASE | re.MULTILINE)
+                return match.group(1) if match else default
+
+            # Extract values with more flexible patterns
+            score = float(safe_extract(r"SCORE:?\s*(\d+(?:\.\d+)?)", "0"))
+            user_type_str = safe_extract(r"TYPE:?\s*(\w+)", "other").lower()
+            user_type = UserType(user_type_str)
+            
+            # Handle pain points with more flexible format
+            pain_match = safe_extract(r"PAIN:?\s*\[?(.*?)\]?", "")
+            pain_points = [p.strip() for p in pain_match.split(",") if p.strip()] if pain_match else []
+            
+            # Handle keywords with more flexible format
+            keywords_match = safe_extract(r"KEYWORDS:?\s*\[?(.*?)\]?", "")
+            keywords = [k.strip() for k in keywords_match.split(",") if k.strip()] if keywords_match else []
+            
+            # Handle sentiment with more flexible format
+            sentiment_str = safe_extract(r"SENTIMENT:?\s*([-]?\d+(?:\.\d+)?)", "0")
+            sentiment = float(sentiment_str)
+            
+            # Handle age relevance with more flexible format
+            age_str = safe_extract(r"AGE:?\s*(true|false|yes|no)", "false").lower()
+            age_relevance = age_str in ["true", "yes"]
+            
+            # Handle urgency with more flexible format
+            urgency = safe_extract(r"URGENCY:?\s*(\w+)", "low").lower()
+            
+            # Handle competitors with more flexible format
+            competitors_match = safe_extract(r"COMPETITORS:?\s*\[?(.*?)\]?", "")
+            competitors = [c.strip() for c in competitors_match.split(",") if c.strip()] if competitors_match else []
             
             return RelevanceScore(
                 total_score=score,
@@ -217,7 +240,7 @@ COMPETITORS: [mention1, mention2, ...]"""
             )
             
         except Exception as e:
-            self.logger.error("Error parsing Claude response", e)
+            self.logger.error(f"Error parsing Claude response: {str(e)}")
             return None
 
     def _analyze_with_nltk(self, content: str) -> RelevanceScore:

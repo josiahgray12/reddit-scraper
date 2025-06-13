@@ -11,6 +11,7 @@ from .response_templates import (
     FREE_RESOURCES,
     NOOKLY_FEATURES
 )
+from .claude_client import ClaudeClient
 
 class ResponseGenerator:
     def __init__(self):
@@ -20,6 +21,7 @@ class ResponseGenerator:
             "teacher": TEACHER_TEMPLATES,
             "therapist": THERAPIST_TEMPLATES
         }
+        self.claude_client = ClaudeClient()
 
     def _extract_keywords(self, text: str) -> List[str]:
         """Extract relevant keywords from text."""
@@ -137,32 +139,42 @@ class ResponseGenerator:
         # Extract information from thread
         text = thread['post']['selftext']
         keywords = self._extract_keywords(text)
-        template_type = self._determine_template_type(thread)
-        
-        # Get template
-        template = self.templates[user_type].get(template_type)
-        if not template:
-            return None
+        pain_points = thread['relevance'].get('pain_points', [])
 
-        # Get resources and features
-        resource1, resource2 = self._get_relevant_resources(keywords)
-        feature = self._get_relevant_feature(keywords)
-        
-        # Prepare template variables
-        template_vars = {
-            'specific_issue': keywords[0] if keywords else "these challenges",
-            'specific_situation': keywords[0] if keywords else "facing these challenges",
-            'specific_need': keywords[0] if keywords else "your needs",
-            'free_resource_1': resource1,
-            'free_resource_2': resource2,
-            'specific_feature': feature,
-            'child_pronoun': self._get_child_pronoun(text)
-        }
+        # Use Claude to generate responses
+        responses = self.claude_client.generate_responses(
+            thread_content=thread,
+            user_type=user_type,
+            pain_points=pain_points
+        )
 
-        # Fill template
-        try:
-            response = template.format(**template_vars)
-            return response.strip()
-        except KeyError as e:
-            print(f"Error filling template: {str(e)}")
-            return None 
+        if responses and len(responses) > 0:
+            # Use the highest-scoring response
+            best_response = max(responses, key=lambda x: x['score'])
+            return best_response['text'].strip()
+        else:
+            # Fallback to template-based response if Claude fails
+            template_type = self._determine_template_type(thread)
+            template = self.templates[user_type].get(template_type)
+            if not template:
+                return None
+
+            resource1, resource2 = self._get_relevant_resources(keywords)
+            feature = self._get_relevant_feature(keywords)
+            
+            template_vars = {
+                'specific_issue': keywords[0] if keywords else "these challenges",
+                'specific_situation': keywords[0] if keywords else "facing these challenges",
+                'specific_need': keywords[0] if keywords else "your needs",
+                'free_resource_1': resource1,
+                'free_resource_2': resource2,
+                'specific_feature': feature,
+                'child_pronoun': self._get_child_pronoun(text)
+            }
+
+            try:
+                response = template.format(**template_vars)
+                return response.strip()
+            except KeyError as e:
+                print(f"Error filling template: {str(e)}")
+                return None 
